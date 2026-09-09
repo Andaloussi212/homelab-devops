@@ -1,0 +1,8 @@
+zaydbenzakour.fr, www.zaydbenzakour.fr {
+    root * /srv
+    file_server
+}
+
+cloud.zaydbenzakour.fr {
+    reverse_proxy 172.17.0.1:8080
+}

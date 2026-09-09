@@ -1,0 +1,25 @@
+services:
+  caddy:
+    image: caddy:latest
+    container_name: portfolio-caddy
+    restart: unless-stopped
+
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+
+    volumes:
+      - /home/zayd/portfolio:/srv:ro
+      - /home/zayd/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+    external: true
+    name: caddy_data
+
+  caddy_config:
+    external: true
+    name: caddy_config

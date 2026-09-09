@@ -1,0 +1,27 @@
+# Secrets / variables d'environnement
+.env
+.env.*
+!.env.example
+secrets/
+
+# Clés et certificats privés
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Sauvegardes
+backups/*
+!backups/.gitkeep
+
+# Logs
+*.log
+
+# Fichiers temporaires
+*.tmp
+*.swp
+
+# OS / éditeurs
+.DS_Store
+.vscode/
+.idea/

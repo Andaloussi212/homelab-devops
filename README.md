@@ -86,7 +86,7 @@ Caddy gère l'accès HTTP/HTTPS aux différents services et les certificats TLS.
 - [x] Reverse proxy avec Caddy
 - [x] HTTPS automatique
 - [x] Accès distant avec Tailscale
-- [ ] Sauvegardes automatisées
+- [x] Sauvegardes automatisées
 - [ ] Monitoring avec Prometheus
 - [ ] Dashboards Grafana
 - [ ] Supervision de disponibilité
@@ -131,3 +131,42 @@ Le projet sera progressivement enrichi avec :
 
 Ce homelab est un projet personnel réalisé dans le cadre de ma montée en compétences en systèmes Linux, infrastructure, DevOps et cybersécurité.
 
+## Sauvegardes automatiques
+
+Une procédure de sauvegarde automatique de Nextcloud est mise en place avec un script Bash et un timer systemd.
+
+La sauvegarde comprend :
+
+- un dump de la base MariaDB ;
+- les fichiers de l'instance Nextcloud ;
+- les données utilisateurs ;
+- la configuration Docker Compose ;
+- une rotation automatique des sauvegardes de plus de 7 jours.
+
+Avant la sauvegarde, Nextcloud est automatiquement placé en mode maintenance afin de garantir la cohérence des données.
+
+Le processus est exécuté automatiquement chaque nuit à 03:00 grâce à systemd.
+
+```text
+systemd timer
+      |
+      v
+nextcloud-backup.service
+      |
+      v
+backup-nextcloud.sh
+      |
+      +--> Maintenance ON
+      +--> Dump MariaDB
+      +--> Sauvegarde des fichiers
+      +--> Maintenance OFF
+      +--> Rotation des anciennes sauvegardes
+```
+
+Les logs d'exécution peuvent être consultés avec :
+
+```bash
+journalctl -u nextcloud-backup.service
+```
+
+> Les sauvegardes locales se trouvent actuellement sur le même disque physique que les données Nextcloud. Elles protègent donc principalement contre les suppressions accidentelles ou erreurs de manipulation. Une sauvegarde sur un support distinct ou hors site est prévue pour assurer une véritable reprise après sinistre.

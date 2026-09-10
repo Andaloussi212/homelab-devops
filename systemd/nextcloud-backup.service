@@ -1,0 +1,9 @@
+[Unit]
+Description=Sauvegarde automatique de Nextcloud
+Requires=docker.service
+After=docker.service
+RequiresMountsFor=/mnt/backup
+
+[Service]
+Type=oneshot
+ExecStart=/home/zayd/homelab-devops/scripts/backup-nextcloud.sh

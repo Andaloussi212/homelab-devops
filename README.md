@@ -90,7 +90,7 @@ Caddy gère l'accès HTTP/HTTPS aux différents services et les certificats TLS.
 - [ ] Monitoring avec Prometheus
 - [ ] Dashboards Grafana
 - [ ] Supervision de disponibilité
-- [ ] Automatisation avec Ansible
+- [x] Automatisation avec Ansible
 - [ ] CI/CD avec GitHub Actions
 - [ ] Infrastructure as Code
 - [ ] Hardening Linux
@@ -170,3 +170,32 @@ journalctl -u nextcloud-backup.service
 ```
 
 > Les sauvegardes locales se trouvent actuellement sur le même disque physique que les données Nextcloud. Elles protègent donc principalement contre les suppressions accidentelles ou erreurs de manipulation. Une sauvegarde sur un support distinct ou hors site est prévue pour assurer une véritable reprise après sinistre.
+
+## Automatisation avec Ansible
+
+Une partie de la configuration du homelab est automatisée avec Ansible.
+
+Les playbooks permettent notamment de :
+
+- vérifier et installer les paquets essentiels ;
+- s'assurer que Docker est actif ;
+- déployer le script de sauvegarde Nextcloud ;
+- installer les unités systemd ;
+- activer automatiquement le timer de sauvegarde.
+
+```text
+Ansible
+   |
+   +--> Configuration de base
+   |      +--> Git
+   |      +--> Curl
+   |      +--> Rsync
+   |      +--> Docker
+   |
+   +--> Sauvegardes Nextcloud
+          +--> Script Bash
+          +--> Service systemd
+          +--> Timer systemd
+```
+
+Les playbooks sont idempotents : une seconde exécution ne modifie pas le système lorsque celui-ci est déjà dans l'état attendu.

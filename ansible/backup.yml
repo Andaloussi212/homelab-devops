@@ -1,0 +1,50 @@
+---
+- name: Déploiement des sauvegardes Nextcloud
+  hosts: homelab
+  become: true
+
+  tasks:
+    - name: Installer le script de sauvegarde Nextcloud
+      ansible.builtin.copy:
+        src: ../scripts/backup-nextcloud.sh
+        dest: /usr/local/sbin/backup-nextcloud.sh
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Installer le service systemd de sauvegarde
+      ansible.builtin.copy:
+        src: ../systemd/nextcloud-backup.service
+        dest: /etc/systemd/system/nextcloud-backup.service
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Recharger systemd
+
+    - name: Installer le timer systemd de sauvegarde
+      ansible.builtin.copy:
+        src: ../systemd/nextcloud-backup.timer
+        dest: /etc/systemd/system/nextcloud-backup.timer
+        owner: root
+        group: root
+        mode: "0644"
+      notify:
+        - Recharger systemd
+        - Redémarrer le timer Nextcloud
+
+    - name: Activer et démarrer le timer Nextcloud
+      ansible.builtin.systemd_service:
+        name: nextcloud-backup.timer
+        enabled: true
+        state: started
+        daemon_reload: true
+
+  handlers:
+    - name: Recharger systemd
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+
+    - name: Redémarrer le timer Nextcloud
+      ansible.builtin.systemd_service:
+        name: nextcloud-backup.timer
+        state: restarted

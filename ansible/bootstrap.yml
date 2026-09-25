@@ -1,0 +1,26 @@
+---
+- name: Configuration de base du homelab
+  hosts: homelab
+  become: true
+
+  tasks:
+    - name: Mettre à jour le cache APT
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Installer les paquets essentiels
+      ansible.builtin.apt:
+        name:
+          - git
+          - curl
+          - rsync
+          - tree
+          - ca-certificates
+        state: present
+
+    - name: Vérifier que Docker est démarré
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true

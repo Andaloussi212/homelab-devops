@@ -6,4 +6,4 @@ RequiresMountsFor=/mnt/backup
 
 [Service]
 Type=oneshot
-ExecStart=/home/zayd/homelab-devops/scripts/backup-nextcloud.sh
+ExecStart=/usr/local/sbin/backup-nextcloud.sh

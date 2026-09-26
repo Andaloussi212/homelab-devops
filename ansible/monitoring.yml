@@ -1,0 +1,23 @@
+---
+- name: Déploiement de la stack de monitoring
+  hosts: homelab
+  become: true
+
+  tasks:
+    - name: Vérifier que Docker est démarré
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Valider la configuration Docker Compose du monitoring
+      ansible.builtin.command:
+        cmd: docker compose config
+        chdir: /home/zayd/homelab-devops/monitoring
+      changed_when: false
+
+    - name: Déployer la stack Prometheus Grafana Node Exporter
+      community.docker.docker_compose_v2:
+        project_src: /home/zayd/homelab-devops/monitoring
+        state: present
+        pull: missing

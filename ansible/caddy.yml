@@ -1,0 +1,54 @@
+---
+- name: Déploiement du reverse proxy Caddy
+  hosts: homelab
+  become: true
+
+  vars:
+    caddy_dir: /opt/homelab/caddy
+
+  tasks:
+    - name: Vérifier que Docker est démarré
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Créer le dossier Caddy
+      ansible.builtin.file:
+        path: "{{ caddy_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Déployer les fichiers Caddy
+      ansible.builtin.copy:
+        src: ../caddy/
+        dest: "{{ caddy_dir }}/"
+        owner: root
+        group: root
+        mode: preserve
+
+    - name: Valider la configuration Docker Compose de Caddy
+      ansible.builtin.command:
+        cmd: docker compose config
+        chdir: "{{ caddy_dir }}"
+      changed_when: false
+      when: not ansible_check_mode
+
+    - name: Valider le Caddyfile
+      ansible.builtin.command:
+        cmd: >
+          docker run --rm
+          -v {{ caddy_dir }}/Caddyfile:/etc/caddy/Caddyfile:ro
+          caddy:latest
+          caddy validate --config /etc/caddy/Caddyfile
+      changed_when: false
+      when: not ansible_check_mode
+
+    - name: Déployer Caddy avec Docker Compose
+      community.docker.docker_compose_v2:
+        project_src: "{{ caddy_dir }}"
+        state: present
+        pull: missing
+      when: not ansible_check_mode

@@ -1,0 +1,12 @@
+---
+- name: Configuration de base du serveur
+  import_playbook: bootstrap.yml
+
+- name: Configuration des sauvegardes Nextcloud
+  import_playbook: backup.yml
+
+- name: Déploiement du monitoring
+  import_playbook: monitoring.yml
+
+- name: Déploiement du reverse proxy Caddy
+  import_playbook: caddy.yml

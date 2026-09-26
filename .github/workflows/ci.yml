@@ -18,16 +18,16 @@ jobs:
       - name: Récupérer le repository
         uses: actions/checkout@v4
 
-      - name: Installer Ansible
+      - name: Installer Ansible et ShellCheck
         run: |
           sudo apt-get update
-          sudo apt-get install -y ansible
+          sudo apt-get install -y ansible shellcheck
 
       - name: Installer les collections Ansible
         run: |
           ansible-galaxy collection install community.docker
 
-      - name: Vérifier la syntaxe du playbook principal
+      - name: Vérifier la syntaxe Ansible
         working-directory: ansible
         run: |
           ansible-playbook -i inventory.ini site.yml --syntax-check
@@ -39,3 +39,22 @@ jobs:
       - name: Vérifier Docker Compose - Caddy
         run: |
           docker compose -f caddy/compose.yml config
+
+      - name: Vérifier la configuration Prometheus
+        run: |
+          docker run --rm \
+            --entrypoint /bin/promtool \
+            -v "$PWD/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro" \
+            prom/prometheus:latest \
+            check config /etc/prometheus/prometheus.yml
+
+      - name: Vérifier le Caddyfile
+        run: |
+          docker run --rm \
+            -v "$PWD/caddy/Caddyfile:/etc/caddy/Caddyfile:ro" \
+            caddy:latest \
+            caddy validate --config /etc/caddy/Caddyfile
+
+      - name: Vérifier le script Bash de sauvegarde
+        run: |
+          shellcheck scripts/backup-nextcloud.sh

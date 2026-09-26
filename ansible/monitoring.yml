@@ -3,6 +3,9 @@
   hosts: homelab
   become: true
 
+  vars:
+    monitoring_dir: /opt/homelab/monitoring
+
   tasks:
     - name: Vérifier que Docker est démarré
       ansible.builtin.service:
@@ -10,14 +13,40 @@
         state: started
         enabled: true
 
-    - name: Valider la configuration Docker Compose du monitoring
+    - name: Créer le dossier du homelab
+      ansible.builtin.file:
+        path: /opt/homelab
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Créer le dossier du monitoring
+      ansible.builtin.file:
+        path: "{{ monitoring_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Déployer les fichiers de configuration du monitoring
+      ansible.builtin.copy:
+        src: ../monitoring/
+        dest: "{{ monitoring_dir }}/"
+        owner: root
+        group: root
+        mode: preserve
+
+    - name: Valider la configuration Docker Compose
       ansible.builtin.command:
         cmd: docker compose config
-        chdir: /home/zayd/homelab-devops/monitoring
+        chdir: "{{ monitoring_dir }}"
       changed_when: false
+      when: not ansible_check_mode
 
     - name: Déployer la stack Prometheus Grafana Node Exporter
       community.docker.docker_compose_v2:
-        project_src: /home/zayd/homelab-devops/monitoring
+        project_src: "{{ monitoring_dir }}"
         state: present
         pull: missing
+      when: not ansible_check_mode

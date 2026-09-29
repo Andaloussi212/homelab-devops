@@ -1,6 +1,6 @@
 # Homelab DevOps
 
-![Validation Homelab](/Andaloussi212/homelab-devops/actions/workflows/ci.yml/badge.svg)
+[![Validation Homelab](https://github.com/Andaloussi212/homelab-devops/actions/workflows/ci.yml/badge.svg)](https://github.com/Andaloussi212/homelab-devops/actions/workflows/ci.yml)
 
 Homelab personnel basé sur un Raspberry Pi sous Debian.
 

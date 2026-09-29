@@ -29,10 +29,35 @@
         group: root
         mode: "0755"
 
-    - name: Déployer les fichiers de configuration du monitoring
+    - name: Créer le dossier Prometheus
+      ansible.builtin.file:
+        path: "{{ monitoring_dir }}/prometheus"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Déployer la configuration Prometheus
       ansible.builtin.copy:
-        src: ../monitoring/
-        dest: "{{ monitoring_dir }}/"
+        src: ../monitoring/prometheus/prometheus.yml
+        dest: "{{ monitoring_dir }}/prometheus/prometheus.yml"
+        owner: root
+        group: root
+        mode: "0644"
+      register: prometheus_config
+
+    - name: Déployer le fichier Docker Compose du monitoring
+      ansible.builtin.copy:
+        src: ../monitoring/compose.yml
+        dest: "{{ monitoring_dir }}/compose.yml"
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Déployer la configuration Grafana
+      ansible.builtin.copy:
+        src: ../monitoring/grafana/
+        dest: "{{ monitoring_dir }}/grafana/"
         owner: root
         group: root
         mode: preserve
@@ -44,9 +69,17 @@
       changed_when: false
       when: not ansible_check_mode
 
-    - name: Déployer la stack Prometheus Grafana Node Exporter
+    - name: Déployer la stack Prometheus Grafana Node Exporter cAdvisor
       community.docker.docker_compose_v2:
         project_src: "{{ monitoring_dir }}"
         state: present
         pull: missing
       when: not ansible_check_mode
+
+    - name: Recréer Prometheus si sa configuration a changé
+      ansible.builtin.command:
+        cmd: docker compose up -d --force-recreate prometheus
+        chdir: "{{ monitoring_dir }}"
+      when:
+        - not ansible_check_mode
+        - prometheus_config.changed

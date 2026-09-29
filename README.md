@@ -272,3 +272,62 @@ Le compte système utilisé par le runner ne dispose pas d'un accès sudo géné
 Le token utilisé par la CI est également limité au repository de déploiement et aux permissions GitHub Actions nécessaires.
 
 Cette séparation permet de conserver le code du homelab public tout en isolant le mécanisme permettant d'exécuter des commandes sur le serveur.
+
+## Architecture
+
+```mermaid
+flowchart TB
+    Internet((Internet))
+
+    subgraph RP["Raspberry Pi - Debian ARM64"]
+        Caddy["Caddy<br/>Reverse Proxy / HTTPS"]
+        Portfolio["Portfolio"]
+        Nextcloud["Nextcloud"]
+
+        MariaDB[("MariaDB")]
+        Redis[("Redis")]
+
+        NodeExporter["Node Exporter"]
+        Prometheus["Prometheus"]
+        Grafana["Grafana"]
+
+        BackupTimer["systemd timer"]
+        BackupScript["Script Bash<br/>backup-nextcloud.sh"]
+        BackupDisk[("/mnt/backup")]
+    end
+
+    subgraph GitHub["GitHub"]
+        Repo["homelab-devops<br/>Repository public"]
+        CI["GitHub Actions<br/>CI"]
+        DeployRepo["homelab-deploy<br/>Repository privé"]
+    end
+
+    Runner["Self-hosted Runner<br/>ARM64"]
+    Ansible["Ansible<br/>site.yml"]
+
+    Internet -->|HTTPS| Caddy
+
+    Caddy --> Portfolio
+    Caddy --> Nextcloud
+
+    Nextcloud --> MariaDB
+    Nextcloud --> Redis
+
+    NodeExporter -->|Métriques système| Prometheus
+    Prometheus -->|Source de données| Grafana
+
+    BackupTimer --> BackupScript
+    BackupScript --> Nextcloud
+    BackupScript --> MariaDB
+    BackupScript --> BackupDisk
+
+    Repo -->|Push main| CI
+    CI -->|Si validations OK| DeployRepo
+    DeployRepo --> Runner
+    Runner -->|Déclenche systemd| Ansible
+
+    Ansible --> Caddy
+    Ansible --> Prometheus
+    Ansible --> Grafana
+    Ansible --> BackupTimer
+```

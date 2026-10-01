@@ -49,11 +49,28 @@ jobs:
             prom/prometheus:latest \
             check config /etc/prometheus/prometheus.yml
 
+      - name: Générer une configuration Alertmanager de test
+        run: |
+          ansible localhost \
+            --connection=local \
+            -m ansible.builtin.template \
+            -a "src=$PWD/monitoring/alertmanager/alertmanager.yml.j2 dest=/tmp/alertmanager.yml" \
+            -e '{
+              "alertmanager_secrets": {
+                "discord_webhook_url": "https://discord.com/api/webhooks/123456789/dummy-token",
+                "smtp_smarthost": "smtp.gmail.com:587",
+                "smtp_from": "ci@example.com",
+                "smtp_username": "ci@example.com",
+                "smtp_password": "dummy-password",
+                "smtp_to": "ci@example.com"
+              }
+            }'
+
       - name: Vérifier Alertmanager
         run: |
           docker run --rm \
             --entrypoint /bin/amtool \
-            -v "$PWD/monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro" \
+            -v "/tmp/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro" \
             prom/alertmanager:latest \
             check-config /etc/alertmanager/alertmanager.yml
 

@@ -37,6 +37,14 @@
         group: root
         mode: "0755"
 
+    - name: Créer le dossier Alertmanager
+      ansible.builtin.file:
+        path: "{{ monitoring_dir }}/alertmanager"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
     - name: Déployer la configuration Prometheus
       ansible.builtin.copy:
         src: ../monitoring/prometheus/prometheus.yml
@@ -45,6 +53,36 @@
         group: root
         mode: "0644"
       register: prometheus_config
+
+    - name: Déployer les règles Prometheus
+      ansible.builtin.copy:
+        src: ../monitoring/prometheus/alerts.yml
+        dest: "{{ monitoring_dir }}/prometheus/alerts.yml"
+        owner: root
+        group: root
+        mode: "0644"
+      register: prometheus_rules
+
+    - name: Charger les secrets Alertmanager
+      ansible.builtin.slurp:
+        src: /etc/homelab/alertmanager-secrets.yml
+      register: alertmanager_secrets_raw
+      no_log: true
+
+    - name: Décoder les secrets Alertmanager
+      ansible.builtin.set_fact:
+        alertmanager_secrets: "{{ alertmanager_secrets_raw.content | b64decode | from_yaml }}"
+      no_log: true
+
+    - name: Déployer la configuration Alertmanager
+      ansible.builtin.template:
+        src: ../monitoring/alertmanager/alertmanager.yml.j2
+        dest: "{{ monitoring_dir }}/alertmanager/alertmanager.yml"
+        owner: "65534"
+        group: "65534"
+        mode: "0600"
+      register: alertmanager_config
+      no_log: true
 
     - name: Déployer le fichier Docker Compose du monitoring
       ansible.builtin.copy:
@@ -69,17 +107,25 @@
       changed_when: false
       when: not ansible_check_mode
 
-    - name: Déployer la stack Prometheus Grafana Node Exporter cAdvisor
+    - name: Déployer la stack de monitoring
       community.docker.docker_compose_v2:
         project_src: "{{ monitoring_dir }}"
         state: present
         pull: missing
       when: not ansible_check_mode
 
-    - name: Recréer Prometheus si sa configuration a changé
+    - name: Recréer Prometheus si sa configuration ou ses règles ont changé
       ansible.builtin.command:
         cmd: docker compose up -d --force-recreate prometheus
         chdir: "{{ monitoring_dir }}"
       when:
         - not ansible_check_mode
-        - prometheus_config.changed
+        - prometheus_config.changed or prometheus_rules.changed
+
+    - name: Recréer Alertmanager si sa configuration a changé
+      ansible.builtin.command:
+        cmd: docker compose up -d --force-recreate alertmanager
+        chdir: "{{ monitoring_dir }}"
+      when:
+        - not ansible_check_mode
+        - alertmanager_config.changed

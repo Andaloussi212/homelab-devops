@@ -1,0 +1,118 @@
+groups:
+  - name: homelab-system
+    rules:
+      - alert: PrometheusTargetDown
+        expr: up{job=~"raspberry-pi|docker"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Une cible Prometheus est indisponible"
+          description: "La cible {{ $labels.instance }} du job {{ $labels.job }} est DOWN depuis plus de 2 minutes."
+
+      - alert: HighCPUUsage
+        expr: |
+          (
+            100 -
+            (
+              avg by (instance) (
+                rate(node_cpu_seconds_total{job="raspberry-pi", mode="idle"}[5m])
+              ) * 100
+            )
+          ) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Utilisation CPU élevée"
+          description: "Le Raspberry Pi utilise plus de 85 % de CPU depuis 5 minutes."
+
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            1 -
+            (
+              node_memory_MemAvailable_bytes{job="raspberry-pi"}
+              /
+              node_memory_MemTotal_bytes{job="raspberry-pi"}
+            )
+          ) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Utilisation RAM élevée"
+          description: "Le Raspberry Pi utilise plus de 85 % de sa RAM depuis 5 minutes."
+
+      - alert: RootDiskAlmostFull
+        expr: |
+          (
+            1 -
+            (
+              node_filesystem_avail_bytes{
+                job="raspberry-pi",
+                mountpoint="/",
+                fstype!~"tmpfs|overlay"
+              }
+              /
+              node_filesystem_size_bytes{
+                job="raspberry-pi",
+                mountpoint="/",
+                fstype!~"tmpfs|overlay"
+              }
+            )
+          ) * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Espace disque faible"
+          description: "La partition racine du Raspberry Pi dépasse 85 % d'utilisation."
+
+  - name: homelab-containers
+    rules:
+      - alert: NextcloudAppDown
+        expr: absent(container_last_seen{job="docker", name="nextcloud-app"})
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Nextcloud est indisponible"
+          description: "Le conteneur nextcloud-app n'est plus détecté par cAdvisor."
+
+      - alert: NextcloudDatabaseDown
+        expr: absent(container_last_seen{job="docker", name="nextcloud-db"})
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "MariaDB Nextcloud est indisponible"
+          description: "Le conteneur nextcloud-db n'est plus détecté par cAdvisor."
+
+      - alert: NextcloudRedisDown
+        expr: absent(container_last_seen{job="docker", name="nextcloud-redis"})
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis Nextcloud est indisponible"
+          description: "Le conteneur nextcloud-redis n'est plus détecté par cAdvisor."
+
+      - alert: PortfolioCaddyDown
+        expr: absent(container_last_seen{job="docker", name="portfolio-caddy"})
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Caddy est indisponible"
+          description: "Le conteneur portfolio-caddy n'est plus détecté par cAdvisor."
+
+      - alert: GrafanaDown
+        expr: absent(container_last_seen{job="docker", name="grafana"})
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Grafana est indisponible"
+          description: "Le conteneur Grafana n'est plus détecté par cAdvisor."
+

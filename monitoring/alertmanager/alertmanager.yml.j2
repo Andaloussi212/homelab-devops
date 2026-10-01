@@ -1,0 +1,53 @@
+global:
+  resolve_timeout: 5m
+
+  smtp_smarthost: "{{ alertmanager_secrets.smtp_smarthost }}"
+  smtp_from: "{{ alertmanager_secrets.smtp_from }}"
+  smtp_auth_username: "{{ alertmanager_secrets.smtp_username }}"
+  smtp_auth_password: "{{ alertmanager_secrets.smtp_password }}"
+  smtp_require_tls: true
+
+route:
+  receiver: "discord-and-email"
+
+  group_by:
+    - alertname
+    - severity
+
+  group_wait: 20s
+  group_interval: 5m
+  repeat_interval: 4h
+
+receivers:
+  - name: "discord-and-email"
+
+    discord_configs:
+      - webhook_url: "{{ alertmanager_secrets.discord_webhook_url }}"
+        send_resolved: true
+        title: >-
+          [{{ '{{' }} .Status | toUpper {{ '}}' }}]
+          {{ '{{' }} .CommonLabels.alertname {{ '}}' }}
+        message: |
+          {{ '{{' }} range .Alerts {{ '}}' }}
+          **{{ '{{' }} .Annotations.summary {{ '}}' }}**
+          {{ '{{' }} .Annotations.description {{ '}}' }}
+          Severity: `{{ '{{' }} .Labels.severity {{ '}}' }}`
+          {{ '{{' }} end {{ '}}' }}
+
+    email_configs:
+      - to: "{{ alertmanager_secrets.smtp_to }}"
+        send_resolved: true
+        headers:
+          subject: >-
+            [Homelab][{{ '{{' }} .Status | toUpper {{ '}}' }}]
+            {{ '{{' }} .CommonLabels.alertname {{ '}}' }}
+        html: |
+          <h2>Homelab - {{ '{{' }} .CommonLabels.alertname {{ '}}' }}</h2>
+
+          {{ '{{' }} range .Alerts {{ '}}' }}
+          <p><strong>Status :</strong> {{ '{{' }} .Status {{ '}}' }}</p>
+          <p><strong>Sévérité :</strong> {{ '{{' }} .Labels.severity {{ '}}' }}</p>
+          <p><strong>{{ '{{' }} .Annotations.summary {{ '}}' }}</strong></p>
+          <p>{{ '{{' }} .Annotations.description {{ '}}' }}</p>
+          <hr>
+          {{ '{{' }} end {{ '}}' }}

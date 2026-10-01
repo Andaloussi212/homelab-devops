@@ -45,8 +45,17 @@ jobs:
           docker run --rm \
             --entrypoint /bin/promtool \
             -v "$PWD/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro" \
+            -v "$PWD/monitoring/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro" \
             prom/prometheus:latest \
             check config /etc/prometheus/prometheus.yml
+
+      - name: Vérifier Alertmanager
+        run: |
+          docker run --rm \
+            --entrypoint /bin/amtool \
+            -v "$PWD/monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro" \
+            prom/alertmanager:latest \
+            check-config /etc/alertmanager/alertmanager.yml
 
       - name: Vérifier le Caddyfile
         run: |

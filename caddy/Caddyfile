@@ -1,8 +1,22 @@
 zaydbenzakour.fr, www.zaydbenzakour.fr {
-    root * /srv
-    file_server
+	root * /srv
+
+	@sensitive {
+		path /.git
+		path /.git/*
+		path /.env
+		path /.env.*
+		path /logs/*
+		path /scripts/*
+		path /README.md
+		path /.gitignore
+	}
+
+	respond @sensitive 404
+
+	file_server
 }
 
 cloud.zaydbenzakour.fr {
-    reverse_proxy 172.17.0.1:8080
+	reverse_proxy 172.17.0.1:8080
 }

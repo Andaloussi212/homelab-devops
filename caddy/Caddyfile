@@ -1,22 +1,32 @@
-zaydbenzakour.fr, www.zaydbenzakour.fr {
-	root * /srv
+kzaydbenzakour.fr, www.zaydbenzakour.fr {
+    root * /srv
 
-	@sensitive {
-		path /.git
-		path /.git/*
-		path /.env
-		path /.env.*
-		path /logs/*
-		path /scripts/*
-		path /README.md
-		path /.gitignore
-	}
+    @sensitive {
+        path /.git
+        path /.git/*
+        path /.env
+        path /.env.*
+        path /logs/*
+        path /scripts/*
+        path /README.md
+        path /.gitignore
+    }
 
-	respond @sensitive 404
+    respond @sensitive 404
 
-	file_server
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+
+        Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests"
+    }
+
+    file_server
 }
 
 cloud.zaydbenzakour.fr {
-	reverse_proxy 172.17.0.1:8080
+    reverse_proxy 172.17.0.1:8080
 }

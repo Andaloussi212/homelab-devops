@@ -1,4 +1,4 @@
-kzaydbenzakour.fr, www.zaydbenzakour.fr {
+zaydbenzakour.fr, www.zaydbenzakour.fr {
     root * /srv
 
     @sensitive {
@@ -28,5 +28,5 @@ kzaydbenzakour.fr, www.zaydbenzakour.fr {
 }
 
 cloud.zaydbenzakour.fr {
-    reverse_proxy 172.17.0.1:8080
+    reverse_proxy nextcloud-app:80
 }

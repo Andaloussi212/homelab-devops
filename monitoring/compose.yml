@@ -4,7 +4,10 @@ services:
     container_name: prometheus
     restart: unless-stopped
     ports:
-      - "100.93.99.1:9090:9090"
+      - target: 9090
+        published: "9090"
+        host_ip: 127.0.0.1
+        protocol: tcp 
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
@@ -42,7 +45,10 @@ services:
     container_name: alertmanager
     restart: unless-stopped
     ports:
-      - "100.93.99.1:9093:9093"
+      - target: 9093
+        published: "9093"
+        host_ip: 127.0.0.1
+        protocol: tcp
     volumes:
       - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
     command:
@@ -55,7 +61,10 @@ services:
     container_name: grafana
     restart: unless-stopped
     ports:
-      - "100.93.99.1:3000:3000"
+      - target: 3000
+        published: "3000"
+        host_ip: 127.0.0.1
+        protocol: tcp
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
